@@ -1,0 +1,4 @@
+dataset/**
+trained_model.h5
+.venv
+output.png
