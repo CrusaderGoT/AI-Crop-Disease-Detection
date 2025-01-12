@@ -2,9 +2,9 @@ import streamlit as st
 import tensorflow as tf
 import numpy as np
 
-def model_prediction(test_image):
+def model_prediction(test_image) -> int:
     'function for predicting disease'
-    model = tf.keras.models.load_model("trained_model.keras", compile=True, safe_mode=True)
+    model = tf.keras.models.load_model("trained_model.keras")
 
     # image to PIL format
     image = tf.keras.utils.load_img(test_image, target_size=(128, 128))
@@ -16,7 +16,7 @@ def model_prediction(test_image):
     result_index = np.argmax(prediction)
     return result_index
 
-def get_disease_name(index):
+def get_disease_name(index) -> str:
     'function for getting the disease name'
     class_names = [
     'Apple___Apple_scab',
@@ -70,7 +70,7 @@ def app():
     'the streamlit app'
     # sidebar
     st.sidebar.title('Dashboard')
-    app_mode = st.sidebar.selectbox("Select Page", ["Homepage", "About", "Disease Recognition"])
+    app_mode = st.sidebar.selectbox("Select Page", ["Homepage", "Disease Recognition", "About"])
 
     # Home Page
     if app_mode == "Homepage":
@@ -81,21 +81,45 @@ def app():
             """
         )
     elif app_mode == "Disease Recognition":
-        st.header("Disease Recognition")
-        input_img = st.file_uploader("upload an image", type=['png', 'jpg', 'jfif'])
-
+        st.header("Disease Recognition", divider=True)
+        st.subheader(
+            """
+            This is the sub heading for this page.\n
+            it should contain an explaination on how this page works.
+            """
+        )
+        input_img = st.file_uploader("Upload an Image", type=['png', 'jpg', 'jfif'])
         # show image button
-        if st.button("Show Image") and input_img:
-            st.image(input_img, use_column_width=True)
-
+        if st.button("Show Image"):
+            if input_img:
+                st.image(input_img, use_column_width=True)
+            else:
+                st.warning("No input image.", icon="🚨")
         # predict button
-        if st.button("Predict") and input_img:
-            with st.spinner("processing image..."):
-                result = model_prediction(input_img)
-                name = get_disease_name(result)
-                st.write("Our Prediction")
-                st.success(f"Model is predicting it's ***{name}***.")
-                st.balloons()
+        if st.button("Predict"):
+            if input_img:
+                with st.spinner("processing image..."):
+                    result = model_prediction(input_img)
+                    name = get_disease_name(result)
+                    if 'healthy' in name:
+                        i = "🔥"
+                    else:
+                        i = "🚨"
+                    st.write("Our Prediction")
+                    st.success(f"Model is predicting it's ***{name}***.", icon=i)
+                    st.balloons()
+            else:
+                st.warning("No input image.", icon="🚨")
+
+    elif app_mode == "About":
+        st.header("About", divider=True, anchor="about")
+        st.markdown(
+            """
+            About should go here **JJ**.\n
+            Typically should be info about the project members,
+            refrences, etc.
+            """
+        )
 
 if __name__ == "__main__":
-    app()
+    app() # run app
