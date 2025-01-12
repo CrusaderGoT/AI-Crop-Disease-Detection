@@ -4,7 +4,7 @@ import numpy as np
 
 def model_prediction(test_image) -> int:
     'function for predicting disease'
-    model = tf.keras.models.load_model("trained_model.keras")
+    model = tf.keras.models.load_model("trained_model.keras", compile=False)
 
     # image to PIL format
     image = tf.keras.utils.load_img(test_image, target_size=(128, 128))
