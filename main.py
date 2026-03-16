@@ -2,8 +2,8 @@ import streamlit as st
 import tensorflow as tf
 import numpy as np
 
-def model_prediction(test_image) -> int:
-    'function for predicting disease'
+def model_prediction(test_image, confidence_threshold=0.5):
+    'function for predicting disease with confidence checks'
     model = tf.keras.models.load_model("trained_model.keras", compile=False)
 
     # image to PIL format
@@ -13,8 +13,10 @@ def model_prediction(test_image) -> int:
     img_array = np.array([img_array]) # to covert single image to a batch
 
     prediction = model.predict(img_array)
-    result_index = np.argmax(prediction)
-    return result_index
+    probs = prediction[0]
+    max_prob = float(np.max(probs))
+    result_index = int(np.argmax(probs))
+    return result_index, max_prob, max_prob >= confidence_threshold
 
 def get_disease_name(index) -> str:
     'function for getting the disease name'
@@ -99,15 +101,23 @@ def app():
         if st.button("Predict"):
             if input_img:
                 with st.spinner("processing image..."):
-                    result = model_prediction(input_img)
-                    name = get_disease_name(result)
-                    if 'healthy' in name:
-                        i = "🔥"
+                    result_index, max_prob, confident = model_prediction(input_img, confidence_threshold=0.55)
+                    if not confident:
+                        st.warning(
+                            "The model is not confident. This image may not be a plant or the image is unclear. "
+                            f"Highest predicted probability: {max_prob:.2%}. Please retry with a clear plant leaf image.", icon="⚠️"
+                        )
                     else:
-                        i = "🚨"
-                    st.write("Our Prediction")
-                    st.success(f"Model is predicting it's ***{name}***.", icon=i)
-                    st.balloons()
+                        name = get_disease_name(result_index)
+                        if 'healthy' in name:
+                            i = "🔥"
+                        else:
+                            i = "🚨"
+                        st.write("Our Prediction")
+                        st.success(
+                            f"Model is predicting it's ***{name}*** with {max_prob:.2%} confidence.", icon=i
+                        )
+                        st.balloons()
             else:
                 st.warning("No input image.", icon="🚨")
 
